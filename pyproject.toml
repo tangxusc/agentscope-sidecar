@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentscope-sidecar"
+version = "0.2.0"
+description = "运行时与插件分离的 Agent 底座(基于 AgentScope 2.x)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+# 只列真正 import 的。HTTP 模式用的 starlette / uvicorn 是 agentscope 的传递依赖。
+dependencies = [
+    "agentscope>=2.0.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-cov>=5.0"]
+
+[project.scripts]
+sidecar = "agentscope_sidecar.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+agentscope_sidecar = ["builtin_plugins/*.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# tests/ 与 tests/e2e/ 下有同名测试文件;prepend 模式按 basename 命名模块会撞车。
+# importlib 模式按完整路径命名,代价是两层的辅助模块都要显式加进 pythonpath。
+pythonpath = ["tests", "tests/e2e"]
+# basetemp 由 tests/conftest.py 的 pytest_configure 探测决定(优先系统临时目录),
+# 所以这里不写死。
+addopts = "--import-mode=importlib"
+
+[tool.coverage.run]
+branch = true
+source = ["agentscope_sidecar"]
+# 子进程各写各的,最后 combine —— 见 tests/_coverage_boot/sitecustomize.py
+parallel = true
+# 常驻服务(HTTP / RPC)由测试用 SIGTERM 结束。不装这个处理器,coverage 来不及
+# 落盘 —— 表现是 http_mode.py 一直显示 0%,像是没测过。
+sigterm = true
+
+[tool.coverage.paths]
+source = ["src/agentscope_sidecar", "*/site-packages/agentscope_sidecar"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+show_missing = true
+skip_covered = false
+
+[tool.coverage.html]
+directory = ".coverage-html"

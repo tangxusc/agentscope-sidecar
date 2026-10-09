@@ -49,6 +49,9 @@ coverage.xml
 *.py.cover
 .hypothesis/
 .pytest_cache/
+# pytest 的 --basetemp 落在工作区内(系统临时目录在受限环境里不可写)。
+# conftest 会在跑完后删掉它;这条只是异常退出时的保险。
+.pytest-tmp/
 cover/
 
 # Translations
@@ -186,7 +189,10 @@ cython_debug/
 #   be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
 #   and can be added to the global gitignore or merged into this file.  For a more nuclear
 #   option (not recommended) you can uncomment the following to ignore the entire idea folder.
-# .idea/
+.idea/
+
+# WorkBuddy AI agent state (local memory, not project content)
+.workbuddy-ai/
 
 # Abstra
 #   Abstra is an AI-powered process automation framework.
